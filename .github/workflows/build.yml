@@ -75,7 +75,7 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./dist/
-          server-dir: ./release/${{ steps.version.outputs.version }}
+          server-dir: ./release/${{ steps.version.outputs.version }}/
 
       - name: Deploy Latest
         uses: "SamKirkland/FTP-Deploy-Action@v4.3.5"
@@ -85,4 +85,4 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./dist/
-          server-dir: ./release/latest
+          server-dir: ./release/latest/
