@@ -1,0 +1,1 @@
+echo "Auto setup is not yet available"
