@@ -75,7 +75,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(
 		&backendFlag,
 		"backend-only",
-		"bo",
+		"b",
 		false,
 		"Whether the cli tool is ran for the backend only or for the main mono repo",
 	)
