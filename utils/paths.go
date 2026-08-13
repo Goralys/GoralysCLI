@@ -2,6 +2,8 @@
  * Copyright (C) 2026 Sami Saubion
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+// Package utils is the main package containing all the utilities functions for CLI tool.
 package utils
 
 import (
@@ -16,6 +18,7 @@ import (
 // Posted by Mostafa, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-08-10, License - CC BY-SA 4.0
 
+// DirExists checks whether a given directory exists.
 func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -27,6 +30,8 @@ func DirExists(path string) (bool, error) {
 	return false, err
 }
 
+// MkDirIfNotExist creates given directory if it does not already exist.
+// If the directory already exists, it does not return an error.
 func MkDirIfNotExist(path string) error {
 	info, err := os.Stat(path)
 
@@ -44,6 +49,8 @@ func MkDirIfNotExist(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
+// RmDir removes a given directory.
+// If the directory does not exist, it returns no error
 func RmDir(path string) error {
 	info, err := os.Stat(path)
 
@@ -61,6 +68,8 @@ func RmDir(path string) error {
 	return os.RemoveAll(path) // recursive
 }
 
+// RmFile removes a given file.
+// If the file does not exist, it returns no error
 func RmFile(path string) error {
 	info, err := os.Stat(path)
 
@@ -78,6 +87,8 @@ func RmFile(path string) error {
 	return os.Remove(path)
 }
 
+// RmAllExcept removes all elements (files and directories) recursively from a given path, except for a specified keep
+// list.
 func RmAllExcept(origin string, keep ...string) error {
 	entries, err := os.ReadDir(origin)
 	if err != nil {

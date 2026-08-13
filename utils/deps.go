@@ -2,6 +2,7 @@
  * Copyright (C) 2026 Sami Saubion
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
 package utils
 
 import (
@@ -13,11 +14,11 @@ import (
 	"strings"
 )
 
-const PhpMinMajor int = 8
-const PhpMinMinor int = 5
+const phpMinMajor int = 8
+const phpMinMinor int = 5
 
-var ErrComposerNotFound = errors.New("composer not found in path")
-var ErrPhpNotFound = errors.New(fmt.Sprintf("php >= %d.%d not found in path", PhpMinMajor, PhpMinMinor))
+var errComposerNotFound = errors.New("composer not found in path")
+var errPhpNotFound = fmt.Errorf("php >= %d.%d not found in path", phpMinMajor, phpMinMinor)
 
 func isPhpBinAtLeast(phpBin string) (bool, error) {
 	out, err := exec.Command(phpBin, "-r", "echo PHP_MAJOR_VERSION . '|' . PHP_MINOR_VERSION;").Output()
@@ -37,11 +38,11 @@ func isPhpBinAtLeast(phpBin string) (bool, error) {
 		return false, err
 	}
 
-	if major != PhpMinMajor {
-		return major > PhpMinMajor, nil
+	if major != phpMinMajor {
+		return major > phpMinMajor, nil
 	}
 
-	return minor >= PhpMinMinor, nil
+	return minor >= phpMinMinor, nil
 }
 
 func phpCandidates() []string {
@@ -61,6 +62,7 @@ func phpCandidates() []string {
 	}
 }
 
+// ResolvePhp is used to locate the php executable.
 func ResolvePhp() (string, error) {
 	for _, candidate := range phpCandidates() {
 		bin, err := exec.LookPath(candidate)
@@ -73,13 +75,15 @@ func ResolvePhp() (string, error) {
 		}
 	}
 
-	return "", ErrPhpNotFound
+	return "", errPhpNotFound
 }
 
+// ResolveComposer is used to retrieve the composer executable and return it as an
+// executable command
 func ResolveComposer(phpBin string, args ...string) (*exec.Cmd, error) {
 	composerBin, err := exec.LookPath("composer")
 	if err != nil {
-		return nil, ErrComposerNotFound
+		return nil, errComposerNotFound
 	}
 
 	if runtime.GOOS == "windows" {
@@ -90,6 +94,7 @@ func ResolveComposer(phpBin string, args ...string) (*exec.Cmd, error) {
 	return exec.Command(phpBin, cmdArgs...), nil
 }
 
+// ResolvePnpm locates the pnpm executable and returns it as an executable command
 func ResolvePnpm(args ...string) (*exec.Cmd, error) {
 	pnpmBin, err := exec.LookPath("pnpm")
 	if err != nil {
@@ -97,4 +102,14 @@ func ResolvePnpm(args ...string) (*exec.Cmd, error) {
 	}
 
 	return exec.Command(pnpmBin, args...), nil
+}
+
+// ResolveNpx locates the npx executable and returns it as an executable command
+func ResolveNpx(args ...string) (*exec.Cmd, error) {
+	npxBin, err := exec.LookPath("npx")
+	if err != nil {
+		return nil, err
+	}
+
+	return exec.Command(npxBin, args...), nil
 }

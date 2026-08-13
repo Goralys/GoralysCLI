@@ -1,0 +1,25 @@
+version: "2"
+
+linters:
+  enable:
+    - lll
+    - govet
+    - unused
+    - revive
+    - gocritic
+    - staticcheck
+  settings:
+    lll:
+      line-length: 120
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - "goralys-cli"
+
+run:
+  timeout: 3m

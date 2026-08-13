@@ -2,6 +2,8 @@
  * Copyright (C) 2026 Sami Saubion
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+// Package utils is the main package containing all the utilities functions for CLI tool
 package utils
 
 import (
@@ -13,21 +15,21 @@ import (
 	"path/filepath"
 )
 
-var ErrMonoRepoRootNotFound = errors.New("goralys mono repo root not found")
+var errMonoRepoRootNotFound = errors.New("goralys mono repo root not found")
 
-const GoralysPkgName = "goralys"
-const GoralysCapPkgName = "goralys-cap"
-const GoralysComposerName = "goralys/goralys"
+const goralysPkgName = "goralys"
+const goralysCapPkgName = "goralys-cap"
+const goralysComposerName = "goralys/goralys"
 
-type PkgJson struct {
+type pkgJSON struct {
 	Name string `json:"name"`
 }
 
-type ComposerJson struct {
+type composerJSON struct {
 	Name string `json:"name"`
 }
 
-func readJsonField(path string, extract func([]byte) (string, error)) (string, error) {
+func readJSONField(path string, extract func([]byte) (string, error)) (string, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -37,27 +39,27 @@ func readJsonField(path string, extract func([]byte) (string, error)) (string, e
 }
 
 func isGoralysRoot(dir string) bool {
-	pkgName, err := readJsonField(path.Join(dir, "package.json"), func(b []byte) (string, error) {
-		var p PkgJson
+	pkgName, err := readJSONField(path.Join(dir, "package.json"), func(b []byte) (string, error) {
+		var p pkgJSON
 		if err := json.Unmarshal(b, &p); err != nil {
 			return "", err
 		}
 
 		return p.Name, nil
 	})
-	if err != nil || pkgName != GoralysPkgName {
+	if err != nil || pkgName != goralysPkgName {
 		return false
 	}
 
-	composerName, err := readJsonField(path.Join(dir, "backend", "composer.json"), func(b []byte) (string, error) {
-		var c ComposerJson
-		if err := json.Unmarshal(b, &c); err != nil {
+	composerName, err := readJSONField(path.Join(dir, "backend", "composer.json"), func(b []byte) (string, error) {
+		var c composerJSON
+		if err = json.Unmarshal(b, &c); err != nil {
 			return "", err
 		}
 
 		return c.Name, nil
 	})
-	if err != nil || composerName != GoralysComposerName {
+	if err != nil || composerName != goralysComposerName {
 		return false
 	}
 
@@ -65,15 +67,15 @@ func isGoralysRoot(dir string) bool {
 }
 
 func isGoralysCapRoot(dir string) bool {
-	pkgName, err := readJsonField(path.Join(dir, "package.json"), func(b []byte) (string, error) {
-		var p PkgJson
+	pkgName, err := readJSONField(path.Join(dir, "package.json"), func(b []byte) (string, error) {
+		var p pkgJSON
 		if err := json.Unmarshal(b, &p); err != nil {
 			return "", err
 		}
 
 		return p.Name, nil
 	})
-	if err != nil || pkgName != GoralysCapPkgName {
+	if err != nil || pkgName != goralysCapPkgName {
 		return false
 	}
 
@@ -96,7 +98,7 @@ func findRepoRoot(start string, checker func(string) bool) (string, error) {
 		parent := filepath.Dir(dir)
 
 		if parent == dir || i > 5 {
-			return "", ErrMonoRepoRootNotFound
+			return "", errMonoRepoRootNotFound
 		}
 
 		dir = parent
@@ -104,6 +106,8 @@ func findRepoRoot(start string, checker func(string) bool) (string, error) {
 	}
 }
 
+// FindRepoRoot retrieves the path of the repository root for the project in which the CLI tool is ran.
+// It recursively tries to go up in the path tree with a maximum depth of 5.
 func FindRepoRoot(start string, isMobile bool) (string, error) {
 	if isMobile {
 		return findRepoRoot(start, isGoralysCapRoot)

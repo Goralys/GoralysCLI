@@ -2,10 +2,13 @@
  * Copyright (C) 2026 Sami Saubion
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+// Package utils is the main package containing all the utilities functions for CLI tool.
 package utils
 
 import "fmt"
 
+// RunEslint runs the pnpm lint command.
 func RunEslint() error {
 	pnpm, err := ResolvePnpm("run", "lint")
 
@@ -20,6 +23,7 @@ func RunEslint() error {
 	return nil
 }
 
+// RunPhpCS runs the pnpm phpcs command.
 func RunPhpCS() error {
 	pnpm, err := ResolvePnpm("run", "phpcs")
 
@@ -34,6 +38,7 @@ func RunPhpCS() error {
 	return nil
 }
 
+// RunPhpCBF runs the pnpm phpcbf command.
 func RunPhpCBF() error {
 	pnpm, err := ResolvePnpm("run", "phpcbf")
 

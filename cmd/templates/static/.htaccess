@@ -1,0 +1,29 @@
+RewriteEngine On
+
+# Blocks direct execution/access to php files out of the backend/public folder
+RewriteCond %{REQUEST_URI} !^/backend/public/
+RewriteCond %{REQUEST_URI} \.php$
+RewriteRule .* - [F,L]
+
+# Blocks backend/Assets/ entirely (schools_list, StudentsDrafts/, etc.)
+RewriteCond %{REQUEST_URI} ^/backend/Assets/
+RewriteRule .* - [F,L]
+
+# Blocks sensible files by name (without extensions, like schools_list)
+<FilesMatch "^schools_list$">
+    Require all denied
+</FilesMatch>
+
+# Blocks all sensible extensions
+<FilesMatch "\.(env|sql|ini|log|md|lock)$">
+    Require all denied
+</FilesMatch>
+
+# /public/... -> backend/public/... internally (proper URLs)
+RewriteCond %{REQUEST_URI} ^/public/
+RewriteRule ^public/(.*)$ /backend/public/$1 [L]
+
+# Catch-all : other request -> backend/public/
+RewriteCond %{REQUEST_URI} !^/backend/public//*
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ /backend/public/$1 [L]

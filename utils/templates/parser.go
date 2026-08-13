@@ -2,17 +2,20 @@
  * Copyright (C) 2026 Sami Saubion
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+// Package utils is the main package containing all the utilities functions for CLI tool
 package utils
 
 import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"goralys-cli/utils"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"goralys-cli/utils"
 
 	"gopkg.in/yaml.v3"
 )
@@ -35,7 +38,7 @@ func formatEnvValue(val any) string {
 }
 
 func parseVersionFromString(_s string) (Version, error) {
-	parts := strings.SplitN(_s, ".", -1)
+	parts := strings.Split(_s, ".")
 	if len(parts) != 3 {
 		return Version{}, fmt.Errorf("wrong version format, expected M.m.p got %s", _s)
 	}
@@ -56,6 +59,8 @@ func parseVersionFromString(_s string) (Version, error) {
 	return Version{M, m, p}, nil
 }
 
+// AtLeast compares a version against a target, it returns true if the version is superior or equal to the target
+// and returns false otherwise
 func (_v Version) AtLeast(target Version) bool {
 	if _v.Major != target.Major {
 		return _v.Major > target.Major
@@ -67,6 +72,7 @@ func (_v Version) AtLeast(target Version) bool {
 	return _v.Patch >= target.Patch
 }
 
+// Equal compares a version against a target and returns true if the 2 are equal
 func (_v Version) Equal(target Version) bool {
 	return _v.Major == target.Major && _v.Minor == target.Minor && _v.Patch == target.Patch
 }
@@ -206,6 +212,8 @@ filterStep:
 	}, nil
 }
 
+// MakeEnvFileFromTemplate loads a YAML template file and parses it. Then it retrieves the version of the current copy
+// of the Goralys project, it then outputs the generated content to the target file specified in the template.
 func MakeEnvFileFromTemplate(root string, template string) error {
 
 	stop := utils.StartSpinnerNoPrefix("-> Parsing template")
