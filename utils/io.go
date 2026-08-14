@@ -27,7 +27,7 @@ const (
 	ColorGreen = "\033[32m"
 
 	// ColorYellow is used for warning output. [unused; uncomment if needed]
-	// ColorYellow = "\033[33m"
+	ColorYellow = "\033[33m"
 
 	// ColorBlue is currently unused. [unused; uncomment if needed]
 	// ColorBlue = "\033[34m"
@@ -102,9 +102,10 @@ func Log(msg string) {
 }
 
 // LogNoPrefix outputs a message to the console without the CLI's default prefix (replaced by leading spaces)
-func LogNoPrefix(msg string) {
-	fmt.Printf("%s %s \n", strings.Repeat(" ", GoralysPrefixLen()), msg)
-}
+// [unused; uncomment if needed]
+// func LogNoPrefix(msg string) {
+// 	fmt.Printf("%s %s \n", strings.Repeat(" ", GoralysPrefixLen()), msg)
+// }
 
 // Logf outputs a formatted message with the CLI's default prefix to the console.
 func Logf(format string, a ...any) {
@@ -112,9 +113,10 @@ func Logf(format string, a ...any) {
 }
 
 // LogfNoPrefix outputs a formatted message to the console without the CLI's default prefix (replaced by leading spaces)
-func LogfNoPrefix(format string, a ...any) {
-	LogNoPrefix(fmt.Sprintf(format, a...))
-}
+// [unused; uncomment if needed]
+// func LogfNoPrefix(format string, a ...any) {
+// 	LogNoPrefix(fmt.Sprintf(format, a...))
+// }
 
 // NewPrefixWriter creates a new prefix writer with a custom label (prefix) for a given output.
 func NewPrefixWriter(label string, dest io.Writer) *PrefixWriter {

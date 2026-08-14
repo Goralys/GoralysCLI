@@ -16,6 +16,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//go:embed version
+var goralysCLIVer string
+
+// GoralysBackupDir used to determine where to create and retrieve backups
+var GoralysBackupDir = []string{".goralys", "backup"}
+
 //go:embed banner.txt
 var banner string
 
@@ -46,9 +52,11 @@ var rootCmd = &cobra.Command{
 
 		return nil
 	},
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Run: func(_ *cobra.Command, _ []string) {
+		if versionFlag {
+			utils.Logf("Goralys CLI %s", goralysCLIVer)
+		}
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,12 +68,22 @@ func Execute() {
 	}
 }
 
+var versionFlag bool
+
 var mobileFlag bool
 var backendFlag bool
 var yesFlag bool
 var noFlag bool
 
 func init() {
+
+	rootCmd.Flags().BoolVarP(
+		&versionFlag,
+		"version",
+		"v",
+		false,
+		"Outputs the version of GoralysCLI",
+	)
 
 	rootCmd.PersistentFlags().BoolVarP(
 		&mobileFlag,

@@ -9,10 +9,22 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 )
+
+// FromHomeDir returns the user's home path followed by an additional and optional path.
+func FromHomeDir(_p ...string) (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	paths := append([]string{homeDir}, _p...)
+	return filepath.Join(paths...), nil
+}
 
 // Source - https://stackoverflow.com/a/10510783
 // Posted by Mostafa, modified by community. See post 'Timeline' for change history
@@ -119,4 +131,74 @@ func RmAllExcept(origin string, keep ...string) error {
 	}
 
 	return nil
+}
+
+// Cp copies a source directory into a destination directory recursively.
+func Cp(src string, dest string) error {
+	src = filepath.Clean(src)
+	dest = filepath.Clean(dest)
+
+	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dest, relPath)
+
+		if d.IsDir() {
+			info, err := d.Info()
+			if err != nil {
+				return err
+			}
+			return os.MkdirAll(target, info.Mode().Perm())
+		}
+
+		return copyFile(path, target)
+	})
+}
+
+// CopyFile copies a given file into a destination file
+func copyFile(src string, dest string) error {
+	err := MkDirIfNotExist(filepath.Dir(dest))
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+			return
+		}
+	}(out)
+
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func(in *os.File) {
+		err := in.Close()
+		if err != nil {
+			return
+		}
+	}(in)
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+
+	return out.Sync()
+}
+
+// CopyFile copies a given file into from its original directory into a target directory
+func CopyFile(origin string, target string, name string) error {
+	return copyFile(filepath.Join(origin, name), filepath.Join(target, name))
 }

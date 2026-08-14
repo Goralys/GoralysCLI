@@ -43,20 +43,71 @@ var setupCmd = &cobra.Command{
 			name = "Goralys"
 		}
 
-		utils.Logf("Setting up %s...", name)
-		utils.Log("Finding repo root...")
+		utils.Logf("Setting up %s", name)
+
+		backupPath, err := utils.FromHomeDir(GoralysBackupDir...)
+		if err != nil {
+			return fmt.Errorf("failed to construct the backup path, %w", err)
+		}
+
+		stop := utils.StartSpinner("Finding repo root")
 
 		cwd, err := os.Getwd()
 		if err != nil {
+			stop(false)
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
 		root, err := utils.FindRepoRoot(cwd, mobileFlag)
 		if err != nil {
+			stop(false)
 			return fmt.Errorf("setup failed, %s", err)
 		}
 
+		stop(true)
 		utils.Logf("Found, setting up for repo at %s", root)
+
+		// backup restore
+		stop = utils.StartSpinner("Checking for existing backup at " + backupPath)
+		exists, err := utils.DirExists(backupPath)
+		if err != nil {
+			stop(false)
+			return err
+		}
+		stop(true)
+
+		var restore bool
+		if exists {
+			utils.PromptBool(&restore, "An existing backup was found, do you want to restore it ?")
+		}
+
+		if restore {
+			utils.Logf("Restoring backup from %s", backupPath)
+
+			stop = utils.StartSpinnerNoPrefix("-> Copying env files")
+			err = utils.CopyFile(backupPath, root, ".env.local")
+			if err != nil {
+				stop(false)
+				return err
+			}
+
+			err = utils.CopyFile(backupPath, root, filepath.Join("backend", ".env"))
+			if err != nil {
+				stop(false)
+				return err
+			}
+			stop(true)
+
+			stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
+			err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(root, "backend", "Assets"))
+			if err != nil {
+				stop(false)
+				return err
+			}
+			stop(true)
+
+			utils.Log("Backup successfully created")
+		}
 
 		if backendFlag {
 			utils.Log("Backend only setup detected")
@@ -85,7 +136,7 @@ var setupCmd = &cobra.Command{
 		}
 
 		if !mobileFlag {
-			stop := utils.StartSpinner("Checking for composer ")
+			stop := utils.StartSpinner("Checking for composer")
 			php, err := utils.ResolvePhp()
 			if err != nil {
 				stop(false)
