@@ -16,8 +16,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//go:embed version
+//go:embed metadata/version
 var goralysCLIVer string
+
+//go:embed metadata/built
+var goralysCLIBuild string
 
 // GoralysBackupDir used to determine where to create and retrieve backups
 var GoralysBackupDir = []string{".goralys", "backup"}
@@ -54,7 +57,7 @@ var rootCmd = &cobra.Command{
 	},
 	Run: func(_ *cobra.Command, _ []string) {
 		if versionFlag {
-			utils.Logf("Goralys CLI %s", goralysCLIVer)
+			utils.Logf("Goralys CLI %s - built on %s", goralysCLIVer, goralysCLIBuild)
 		}
 	},
 }
