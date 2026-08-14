@@ -1,2 +1,10 @@
+# build outputs
 build
+dist
+
+# IDEs
+.vscode
 .idea
+
+# custom local scripts
+scripts/build.ps1
