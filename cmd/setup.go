@@ -204,7 +204,7 @@ var setupCmd = &cobra.Command{
 				stop(true)
 
 				stop = utils.StartSpinnerNoPrefix("-> Setting up capacitor")
-				capSync, err := utils.ResolveNpx("cap", "sync", "android")
+				capSync, err := utils.ResolveNpx("cap", "add", "android")
 				if err != nil {
 					stop(false)
 					return err
