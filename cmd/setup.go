@@ -180,8 +180,8 @@ var setupCmd = &cobra.Command{
 		if backendFlag || mobileFlag {
 			utils.Log("Finalizing your configuration, you are almost there")
 			if backendFlag {
-				stop := utils.StartSpinnerNoPrefix("-> Creating backend/.htaccess")
-				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, "backend", ".htaccess"))
+				stop := utils.StartSpinnerNoPrefix("-> Creating .htaccess")
+				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, ".htaccess"))
 				if err != nil {
 					stop(false)
 					return err
