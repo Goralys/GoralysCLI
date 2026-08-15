@@ -109,14 +109,6 @@ var setupCmd = &cobra.Command{
 			utils.Log("Backup successfully created")
 		}
 
-		if backendFlag {
-			utils.Log("Backend only setup detected")
-			err = utils.RemoveNonBackendDirs(root)
-			if err != nil {
-				return err
-			}
-		}
-
 		if !backendFlag {
 			stop := utils.StartSpinner("Checking for pnpm")
 			pnpm, err := utils.ResolvePnpm("install", "--color")
@@ -247,9 +239,19 @@ var setupCmd = &cobra.Command{
 			}
 		}
 
+		if backendFlag {
+			utils.Log("Backend only setup detected, removing non backend dir")
+			err = utils.RemoveNonBackendDirs(root)
+			if err != nil {
+				return err
+			}
+		}
+
 		var testsStr = "eslint + phpcs"
 		if mobileFlag {
 			testsStr = "eslint"
+		} else if backendFlag {
+			testsStr = "phpcs"
 		}
 
 		var tests bool
