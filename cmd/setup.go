@@ -203,17 +203,41 @@ var setupCmd = &cobra.Command{
 				}
 				stop(true)
 
-				stop = utils.StartSpinnerNoPrefix("-> Setting up capacitor")
-				capSync, err := utils.ResolveNpx("cap", "add", "android")
+				stop = utils.StartSpinnerNoPrefix("-> Building project")
+				pnpmBuild, err := utils.ResolvePnpm("run", "build")
 				if err != nil {
 					stop(false)
 					return err
 				}
 
-				if err = capSync.Run(); err != nil {
+				if err = pnpmBuild.Run(); err != nil {
 					stop(false)
 					return err
 				}
+				stop(true)
+
+				androidExists, err := utils.DirExists(filepath.Join(root, "android"))
+				if err != nil {
+					return err
+				}
+
+				capCmdTxt := "add"
+				if androidExists {
+					capCmdTxt = "sync"
+				}
+
+				stop = utils.StartSpinnerNoPrefix("-> Setting up capacitor")
+				capCmd, err := utils.ResolveNpx("cap", capCmdTxt, "android")
+				if err != nil {
+					stop(false)
+					return err
+				}
+
+				if err = capCmd.Run(); err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
 
 				stop = utils.StartSpinnerNoPrefix("-> Creating MainActivity.java")
 				err = templates.LoadStaticTemplate(
