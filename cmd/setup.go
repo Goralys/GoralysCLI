@@ -21,8 +21,11 @@ import (
 //go:embed templates/dynamic/env.yaml
 var envTemplate string
 
-//go:embed templates/dynamic/env.local.yaml
-var envLocalTemplate string
+//go:embed templates/dynamic/env.next.yaml
+var envNextTemplate string
+
+//go:embed templates/dynamic/env.cap.yaml
+var envCapTemplate string
 
 //go:embed templates/static/.htaccess
 var htAccessTemplate string
@@ -165,13 +168,13 @@ var setupCmd = &cobra.Command{
 			}
 
 			utils.Log("(2/2) Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envLocalTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate)
 			if err != nil {
 				return err
 			}
 		} else {
 			utils.Log("Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envLocalTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate)
 			if err != nil {
 				return err
 			}
