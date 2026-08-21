@@ -92,28 +92,33 @@ var setupCmd = &cobra.Command{
 			utils.Logf("Restoring backup from %s", backupPath)
 
 			stop = utils.StartSpinnerNoPrefix("-> Copying env files")
-			err = utils.CopyFile(backupPath, root, ".env.local")
-			if err != nil {
-				stop(false)
-				return err
+			if !backendFlag {
+				err = utils.CopyFile(backupPath, root, ".env.local")
+				if err != nil {
+					stop(false)
+					return err
+				}
 			}
-
-			err = utils.CopyFile(backupPath, root, filepath.Join("backend", ".env"))
-			if err != nil {
-				stop(false)
-				return err
-			}
-			stop(true)
-
-			stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
-			err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(root, "backend", "Assets"))
-			if err != nil {
-				stop(false)
-				return err
+			if !mobileFlag {
+				err = utils.CopyFile(backupPath, root, filepath.Join("backend", ".env"))
+				if err != nil {
+					stop(false)
+					return err
+				}
 			}
 			stop(true)
 
-			utils.Log("Backup successfully created")
+			if !mobileFlag {
+				stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
+				err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(root, "backend", "Assets"))
+				if err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
+			}
+
+			utils.Log("Backup successfully restored")
 		}
 
 		if !backendFlag {
