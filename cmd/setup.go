@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"goralys-cli/utils"
 	templates "goralys-cli/utils/templates"
@@ -21,8 +22,11 @@ import (
 //go:embed templates/dynamic/env.yaml
 var envTemplate string
 
-//go:embed templates/dynamic/env.local.yaml
-var envLocalTemplate string
+//go:embed templates/dynamic/env.next.yaml
+var envNextTemplate string
+
+//go:embed templates/dynamic/env.cap.yaml
+var envCapTemplate string
 
 //go:embed templates/static/.htaccess
 var htAccessTemplate string
@@ -36,11 +40,13 @@ var setupCmd = &cobra.Command{
 	Long: `This command is used to create the necessary files and install the
     dependencies (pnpm and composer) for the project.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
-		var name string
+		var name = "Goralys"
+		var suffix = "frontend"
 		if mobileFlag {
 			name = "GoralysCap"
-		} else {
-			name = "Goralys"
+		}
+		if backendFlag {
+			suffix = "backend"
 		}
 
 		utils.Logf("Setting up %s", name)
@@ -50,6 +56,7 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("failed to construct the backup path, %w", err)
 		}
 
+		backupPath = filepath.Join(backupPath, strings.ToLower(name), strings.ToLower(suffix))
 		stop := utils.StartSpinner("Finding repo root")
 
 		cwd, err := os.Getwd()
@@ -109,14 +116,6 @@ var setupCmd = &cobra.Command{
 			utils.Log("Backup successfully created")
 		}
 
-		if backendFlag {
-			utils.Log("Backend only setup detected")
-			err = utils.RemoveNonBackendDirs(root)
-			if err != nil {
-				return err
-			}
-		}
-
 		if !backendFlag {
 			stop := utils.StartSpinner("Checking for pnpm")
 			pnpm, err := utils.ResolvePnpm("install", "--color")
@@ -173,13 +172,13 @@ var setupCmd = &cobra.Command{
 			}
 
 			utils.Log("(2/2) Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envLocalTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate)
 			if err != nil {
 				return err
 			}
 		} else {
 			utils.Log("Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envLocalTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate)
 			if err != nil {
 				return err
 			}
@@ -188,8 +187,8 @@ var setupCmd = &cobra.Command{
 		if backendFlag || mobileFlag {
 			utils.Log("Finalizing your configuration, you are almost there")
 			if backendFlag {
-				stop := utils.StartSpinnerNoPrefix("-> Creating backend/.htaccess")
-				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, "backend", ".htaccess"))
+				stop := utils.StartSpinnerNoPrefix("-> Creating .htaccess")
+				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, ".htaccess"))
 				if err != nil {
 					stop(false)
 					return err
@@ -211,17 +210,41 @@ var setupCmd = &cobra.Command{
 				}
 				stop(true)
 
-				stop = utils.StartSpinnerNoPrefix("-> Setting up capacitor")
-				capSync, err := utils.ResolveNpx("cap", "sync", "android")
+				stop = utils.StartSpinnerNoPrefix("-> Building project")
+				pnpmBuild, err := utils.ResolvePnpm("run", "build")
 				if err != nil {
 					stop(false)
 					return err
 				}
 
-				if err = capSync.Run(); err != nil {
+				if err = pnpmBuild.Run(); err != nil {
 					stop(false)
 					return err
 				}
+				stop(true)
+
+				androidExists, err := utils.DirExists(filepath.Join(root, "android"))
+				if err != nil {
+					return err
+				}
+
+				capCmdTxt := "add"
+				if androidExists {
+					capCmdTxt = "sync"
+				}
+
+				stop = utils.StartSpinnerNoPrefix("-> Setting up capacitor")
+				capCmd, err := utils.ResolveNpx("cap", capCmdTxt, "android")
+				if err != nil {
+					stop(false)
+					return err
+				}
+
+				if err = capCmd.Run(); err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
 
 				stop = utils.StartSpinnerNoPrefix("-> Creating MainActivity.java")
 				err = templates.LoadStaticTemplate(
@@ -247,9 +270,19 @@ var setupCmd = &cobra.Command{
 			}
 		}
 
+		if backendFlag {
+			utils.Log("Backend only setup detected, removing non backend dir")
+			err = utils.RemoveNonBackendDirs(root)
+			if err != nil {
+				return err
+			}
+		}
+
 		var testsStr = "eslint + phpcs"
 		if mobileFlag {
 			testsStr = "eslint"
+		} else if backendFlag {
+			testsStr = "phpcs"
 		}
 
 		var tests bool

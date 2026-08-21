@@ -24,7 +24,7 @@ func LoadStaticTemplate(template string, path string) error {
 		return err
 	}
 
-	if info.IsDir() {
+	if err == nil && info.IsDir() {
 		return fmt.Errorf("cannot write template to path %s because it is a directory", path)
 	}
 

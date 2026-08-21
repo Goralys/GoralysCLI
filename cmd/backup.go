@@ -11,6 +11,7 @@ import (
 	"goralys-cli/utils"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -27,8 +28,12 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		var name = "Goralys"
+		var suffix = "frontend"
 		if mobileFlag {
 			name = "GoralysCap"
+		}
+		if backendFlag {
+			suffix = "backend"
 		}
 
 		backupPath, err := utils.FromHomeDir(GoralysBackupDir...)
@@ -36,6 +41,7 @@ to quickly create a Cobra application.`,
 			return fmt.Errorf("failed to construct the backup path, %w", err)
 		}
 
+		backupPath = filepath.Join(backupPath, strings.ToLower(name), strings.ToLower(suffix))
 		utils.Logf("Creating backup for %s", name)
 		utils.Log(utils.Colorize(utils.ColorYellow, "This command does not back up the database"))
 
