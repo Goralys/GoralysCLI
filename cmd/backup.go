@@ -8,10 +8,11 @@ package cmd
 
 import (
 	"fmt"
-	"goralys-cli/utils"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"goralys-cli/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -92,26 +93,32 @@ to quickly create a Cobra application.`,
 
 		utils.Log("Creating backup")
 		stop = utils.StartSpinnerNoPrefix("-> Copying env files")
-		err = utils.CopyFile(root, backupPath, ".env.local")
-		if err != nil {
-			stop(false)
-			return err
+		if !backendFlag {
+			err = utils.CopyFile(root, backupPath, ".env.local")
+			if err != nil {
+				stop(false)
+				return err
+			}
 		}
 
-		err = utils.CopyFile(root, backupPath, filepath.Join("backend", ".env"))
-		if err != nil {
-			stop(false)
-			return err
+		if !mobileFlag {
+			err = utils.CopyFile(root, backupPath, filepath.Join("backend", ".env"))
+			if err != nil {
+				stop(false)
+				return err
+			}
 		}
 		stop(true)
 
-		stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
-		err = utils.Cp(filepath.Join(root, "backend", "Assets"), filepath.Join(backupPath, "backend", "Assets"))
-		if err != nil {
-			stop(false)
-			return err
+		if !mobileFlag {
+			stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
+			err = utils.Cp(filepath.Join(root, "backend", "Assets"), filepath.Join(backupPath, "backend", "Assets"))
+			if err != nil {
+				stop(false)
+				return err
+			}
+			stop(true)
 		}
-		stop(true)
 
 		utils.Log("Backup successfully created")
 
