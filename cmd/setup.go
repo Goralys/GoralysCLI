@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"goralys-cli/utils"
 	templates "goralys-cli/utils/templates"
@@ -39,11 +40,13 @@ var setupCmd = &cobra.Command{
 	Long: `This command is used to create the necessary files and install the
     dependencies (pnpm and composer) for the project.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
-		var name string
+		var name = "Goralys"
+		var suffix = "frontend"
 		if mobileFlag {
 			name = "GoralysCap"
-		} else {
-			name = "Goralys"
+		}
+		if backendFlag {
+			suffix = "backend"
 		}
 
 		utils.Logf("Setting up %s", name)
@@ -53,6 +56,7 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("failed to construct the backup path, %w", err)
 		}
 
+		backupPath = filepath.Join(backupPath, strings.ToLower(name), strings.ToLower(suffix))
 		stop := utils.StartSpinner("Finding repo root")
 
 		cwd, err := os.Getwd()
