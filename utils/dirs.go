@@ -61,6 +61,7 @@ func RemoveNonBackendDirs(root string) error {
 		"LICENSE",
 		"README.md",
 		"CONTRIBUTING.md",
+		"package.json",
 		"backend",
 		".git",
 		"scripts",

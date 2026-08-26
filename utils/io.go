@@ -182,12 +182,12 @@ func (w *PrefixWriter) writeSegment(line string, isOverwrite bool) {
 
 // Prompt prompts the user with a given message (question) and writes the output the given string variable (dest).
 func Prompt(dest *string, msg string) {
+	fmt.Printf("[%s] %s ", GoralysText(), msg)
 	if skipPrompt != 0 {
 		*dest = []string{PromptNo, PromptYes}[skipPrompt-1]
 		return
 	}
 
-	fmt.Printf("[%s] %s ", GoralysText(), msg)
 	if _, err := fmt.Scan(dest); err != nil {
 		return
 	}
@@ -205,13 +205,19 @@ func PromptBool(dest *bool, msg string) {
 	Promptf(&raw, "%s [Y/n]: ", msg)
 
 	*dest = strings.ToLower(strings.TrimSpace(raw)) == "y"
+	prefix := "\033[1A\033[2K\r" // move up 1 line, clear line, return to start of line
+
+	if *dest {
+		fmt.Printf("%s[%s] %s %s\n", prefix, GoralysText(), msg, Colorize(ColorGreen, "Yes"))
+	}
+
+	if !*dest {
+		fmt.Printf("%s[%s] %s %s\n", prefix, GoralysText(), msg, Colorize(ColorRed, "No"))
+	}
 }
 
 // PromptfBool prompts the user for a given yes or no question (formatted) and writes the output to the given bool
 // variable (dest).
 func PromptfBool(dest *bool, format string, a ...any) {
-	var raw string
-	Promptf(&raw, "%s [Y/n]: ", fmt.Sprintf(format, a...))
-
-	*dest = strings.ToLower(strings.TrimSpace(raw)) == "y"
+	PromptBool(dest, fmt.Sprintf(format, a...))
 }
