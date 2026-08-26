@@ -119,6 +119,8 @@ var setupCmd = &cobra.Command{
 			}
 
 			utils.Log("Backup successfully restored")
+		} else {
+			utils.Log("No backup found")
 		}
 
 		if !backendFlag {
@@ -295,7 +297,7 @@ var setupCmd = &cobra.Command{
 
 		if tests {
 			stop := utils.StartSpinner("Running phpcs")
-			err = utils.RunPhpCS()
+			err = utils.RunPhpCS(backendFlag)
 			if err != nil {
 				stop(false)
 
@@ -304,14 +306,14 @@ var setupCmd = &cobra.Command{
 
 				if reRun {
 					stop = utils.StartSpinner("Running phpcbf")
-					if err = utils.RunPhpCBF(); err != nil {
+					if err = utils.RunPhpCBF(backendFlag); err != nil {
 						stop(false)
 						return err
 					}
 					stop(true)
 
 					stop = utils.StartSpinner("Re-running phpcs after fixes")
-					if err = utils.RunPhpCS(); err != nil {
+					if err = utils.RunPhpCS(backendFlag); err != nil {
 						stop(false)
 						return err
 					}
@@ -322,12 +324,14 @@ var setupCmd = &cobra.Command{
 				stop(true)
 			}
 
-			stop = utils.StartSpinner("Running eslint")
-			if err = utils.RunEslint(); err != nil {
-				stop(false)
-				return err
+			if !backendFlag {
+				stop = utils.StartSpinner("Running eslint")
+				if err = utils.RunEslint(); err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
 			}
-			stop(true)
 		}
 
 		return nil
