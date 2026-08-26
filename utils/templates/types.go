@@ -5,13 +5,27 @@
 
 package utils
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+
+	"gopkg.in/yaml.v3"
+)
 
 // Version represents a version with format Major.Minor.Patch (or M.m.p for short)
 type Version struct {
 	Major int
 	Minor int
 	Patch int
+}
+
+// IsNil checks if the version is different from 0.0.0 (uninitialized var -> should be nil)
+func (v Version) IsNil() bool {
+	return (v.Major | v.Minor | v.Patch) == 0b0
+}
+
+// ToString converts a version into a formatted string with the Major.minor.patch format (or M.m.p)
+func (v Version) ToString() string {
+	return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 }
 
 // EnvVar represents an environment variable with its key and value

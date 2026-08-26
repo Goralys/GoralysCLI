@@ -37,7 +37,8 @@ func formatEnvValue(val any) string {
 	}
 }
 
-func parseVersionFromString(_s string) (Version, error) {
+// ParseVersionFromString attempts to convert a string into a strongly typed Version struct
+func ParseVersionFromString(_s string) (Version, error) {
 	parts := strings.Split(_s, ".")
 	if len(parts) != 3 {
 		return Version{}, fmt.Errorf("wrong version format, expected M.m.p got %s", _s)
@@ -61,20 +62,20 @@ func parseVersionFromString(_s string) (Version, error) {
 
 // AtLeast compares a version against a target, it returns true if the version is superior or equal to the target
 // and returns false otherwise
-func (_v Version) AtLeast(target Version) bool {
-	if _v.Major != target.Major {
-		return _v.Major > target.Major
+func (v Version) AtLeast(target Version) bool {
+	if v.Major != target.Major {
+		return v.Major > target.Major
 	}
-	if _v.Minor != target.Minor {
-		return _v.Minor > target.Minor
+	if v.Minor != target.Minor {
+		return v.Minor > target.Minor
 	}
 
-	return _v.Patch >= target.Patch
+	return v.Patch >= target.Patch
 }
 
 // Equal compares a version against a target and returns true if the 2 are equal
-func (_v Version) Equal(target Version) bool {
-	return _v.Major == target.Major && _v.Minor == target.Minor && _v.Patch == target.Patch
+func (v Version) Equal(target Version) bool {
+	return v.Major == target.Major && v.Minor == target.Minor && v.Patch == target.Patch
 }
 
 func parseYamlTemplate(root string, data []byte) (EnvFile, error) {
@@ -94,7 +95,7 @@ func parseYamlTemplate(root string, data []byte) (EnvFile, error) {
 		return EnvFile{}, err
 	}
 
-	target, err := parseVersionFromString(ref.Version)
+	target, err := ParseVersionFromString(ref.Version)
 	if err != nil {
 		return EnvFile{}, err
 	}
@@ -103,7 +104,7 @@ func parseYamlTemplate(root string, data []byte) (EnvFile, error) {
 	result.File = raw.File
 
 	for vName, vNode := range raw.Versions {
-		v, err := parseVersionFromString(vName)
+		v, err := ParseVersionFromString(vName)
 		if err != nil {
 			return EnvFile{}, err
 		}

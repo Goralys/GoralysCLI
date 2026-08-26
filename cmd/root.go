@@ -40,6 +40,7 @@ var rootCmd = &cobra.Command{
     This CLI is separate from the monorepo at https://github.com/SAMSAM-55/Goralys.`,
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		showBanner()
+		utils.CleanOldPath()
 
 		if backendFlag && mobileFlag {
 			return fmt.Errorf("cannot pass both --backend-only and --mobile")
@@ -109,8 +110,7 @@ func init() {
 		"yes",
 		"y",
 		false,
-		"The interactive prompts will be skipped and will be answered as 'yes'. If both this flag and the 'no'"+
-			"flag are passed, the prompts will be answered as 'yes'",
+		"The interactive prompts will be skipped and will be answered as 'yes'.",
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(

@@ -11,8 +11,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // FromHomeDir returns the user's home path followed by an additional and optional path.
@@ -201,4 +203,114 @@ func copyFile(src string, dest string) error {
 // CopyFile copies a given file into from its original directory into a target directory
 func CopyFile(origin string, target string, name string) error {
 	return copyFile(filepath.Join(origin, name), filepath.Join(target, name))
+}
+
+// UpgradeSelf replaces the current executable for the tool by the one at the given url ([newExecUrl])
+func UpgradeSelf(newExecURL string) error {
+	var confirm bool
+	PromptfBool(&confirm, "Install new executable from %s ?", newExecURL)
+	if !confirm {
+		Log("User aborted upgrade")
+		return nil
+	}
+
+	stop := StartSpinnerNoPrefix("-> Resolving current executable path")
+	current, err := os.Executable()
+	if err != nil {
+		stop(false)
+		return err
+	}
+
+	current, err = filepath.EvalSymlinks(current) // resolve symlinks if any
+	if err != nil {
+		stop(false)
+		return err
+	}
+	stop(true)
+
+	stop = StartSpinnerNoPrefix("-> Fetching new executable")
+	res, err := http.Get(newExecURL)
+	if err != nil {
+		stop(false)
+		return err
+	}
+	defer func(res *http.Response) {
+		_ = res.Body.Close() //nolint:errcheck
+	}(res)
+
+	if res.StatusCode != http.StatusOK {
+		stop(false)
+		return fmt.Errorf("failed to fetch new executable, unexpected status %s(%d)", res.Status, res.StatusCode)
+	}
+	stop(true)
+
+	stop = StartSpinnerNoPrefix("-> Replacing executable")
+	dir := filepath.Dir(current)
+	tmpFile, err := os.CreateTemp(dir, "goralys-cli-upgrade-*")
+	if err != nil {
+		stop(false)
+		return err
+	}
+	tmpPath := tmpFile.Name()
+
+	if _, err = io.Copy(tmpFile, res.Body); err != nil {
+		stop(false)
+		_ = tmpFile.Close()    //nolint:errcheck
+		_ = os.Remove(tmpPath) //nolint:errcheck
+		return err
+	}
+
+	if err = tmpFile.Close(); err != nil {
+		stop(false)
+		return err
+	}
+
+	if err = os.Chmod(tmpPath, 0o755); err != nil {
+		stop(false)
+		_ = os.Remove(tmpPath) //nolint:errcheck
+		return err
+	}
+
+	oldPath := current + ".old"
+	if runtime.GOOS == "windows" {
+		// Windows: rename current into old, then rename new into current
+		if err = os.Rename(current, oldPath); err != nil {
+			_ = os.Remove(tmpPath) //nolint:errcheck
+			stop(false)
+			return fmt.Errorf("failed to rename old executable, %w", err)
+		}
+
+		if err = os.Rename(tmpPath, current); err != nil {
+			// try to restore
+			_ = os.Rename(oldPath, current) //nolint:errcheck
+			stop(false)
+			return fmt.Errorf(
+				"failed to install new executable, installation may be %s, %w",
+				Colorize(ColorYellow, "corrupted"),
+				err,
+			)
+		}
+	} else {
+		// Unix: rename current executable directly
+		if err = os.Rename(tmpPath, current); err != nil {
+			_ = os.Remove(tmpPath) //nolint:errcheck
+			stop(false)
+			return fmt.Errorf("failed to install new executable, %w", err)
+		}
+	}
+	stop(true)
+
+	return nil
+}
+
+// CleanOldPath cleans potential residual executables from previous upgrades. It is called on every command pre-run.
+func CleanOldPath() {
+	current, err := os.Executable()
+	if err != nil {
+		return
+	}
+
+	old := current + ".old"
+
+	_ = os.Remove(old) //nolint:errcheck
 }
