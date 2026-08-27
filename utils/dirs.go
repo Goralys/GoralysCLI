@@ -65,6 +65,7 @@ func RemoveNonBackendDirs(root string) error {
 		"backend",
 		".git",
 		"scripts",
+		".htaccess",
 	); err != nil {
 		stop(false)
 		return err
