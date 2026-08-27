@@ -172,23 +172,29 @@ var setupCmd = &cobra.Command{
 		utils.Log("Configuring environments")
 
 		if !mobileFlag {
-			utils.Log("(1/2) Creating .env")
+			stop = utils.StartSpinnerNoPrefix("(1/2) Creating .env")
 			err = templates.MakeEnvFileFromTemplate(root, envTemplate)
 			if err != nil {
+				stop(false)
 				return err
 			}
+			stop(true)
 
-			utils.Log("(2/2) Creating .env.local")
+			stop = utils.StartSpinnerNoPrefix("(2/2) Creating .env.local")
 			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate)
 			if err != nil {
+				stop(false)
 				return err
 			}
+			stop(true)
 		} else {
-			utils.Log("Creating .env.local")
+			stop = utils.StartSpinnerNoPrefix("Creating .env.local")
 			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate)
 			if err != nil {
+				stop(false)
 				return err
 			}
+			stop(true)
 		}
 
 		if backendFlag || mobileFlag {
