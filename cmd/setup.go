@@ -172,29 +172,20 @@ var setupCmd = &cobra.Command{
 		utils.Log("Configuring environments")
 
 		if !mobileFlag {
-			stop = utils.StartSpinnerNoPrefix("(1/2) Creating .env")
-			err = templates.MakeEnvFileFromTemplate(root, envTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envTemplate, "(1/2) Creating .env")
 			if err != nil {
-				stop(false)
 				return err
 			}
-			stop(true)
 
-			stop = utils.StartSpinnerNoPrefix("(2/2) Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate, "(2/2) Creating .env.local")
 			if err != nil {
-				stop(false)
 				return err
 			}
-			stop(true)
 		} else {
-			stop = utils.StartSpinnerNoPrefix("Creating .env.local")
-			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate)
+			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate, "Creating .env.local")
 			if err != nil {
-				stop(false)
 				return err
 			}
-			stop(true)
 		}
 
 		if backendFlag || mobileFlag {
@@ -308,6 +299,7 @@ var setupCmd = &cobra.Command{
 				stop(false)
 
 				var reRun bool
+				utils.Logf("Phpcs error: %s", err)
 				utils.PromptBool(&reRun, "phpcs violations were found, do you want setup to try to fix them ?")
 
 				if reRun {

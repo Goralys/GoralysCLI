@@ -215,32 +215,46 @@ filterStep:
 
 // MakeEnvFileFromTemplate loads a YAML template file and parses it. Then it retrieves the version of the current copy
 // of the Goralys project, it then outputs the generated content to the target file specified in the template.
-func MakeEnvFileFromTemplate(root string, template string) error {
+func MakeEnvFileFromTemplate(root string, template string, message string) error {
+	var env EnvFile
+	var err error
 
-	stop := utils.StartSpinnerNoPrefix("-> Parsing template")
-	env, err := parseYamlTemplate(root, []byte(template))
-	if err != nil {
-		stop(false)
-		return err
+	parse := utils.SpinnerStep{
+		Callback: func() error {
+			env, err = parseYamlTemplate(root, []byte(template))
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		Name: "Parsing template",
 	}
-	stop(true)
 
-	stop = utils.StartSpinnerNoPrefix("-> Merging files")
-	finalEnv, err := mergeEnvFile(root, env)
-	if err != nil {
-		stop(false)
-		return err
+	merge := utils.SpinnerStep{
+		Callback: func() error {
+			env, err = mergeEnvFile(root, env)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		Name: "Merging files",
 	}
-	stop(true)
 
-	stop = utils.StartSpinnerNoPrefix("-> Writing final content")
-	content := buildEnvFileContents(finalEnv)
-	err = os.WriteFile(filepath.Join(root, finalEnv.File), []byte(content), os.ModePerm)
-	if err != nil {
-		stop(false)
-		return err
+	write := utils.SpinnerStep{
+		Callback: func() error {
+			content := buildEnvFileContents(env)
+			err = os.WriteFile(filepath.Join(root, env.File), []byte(content), os.ModePerm)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+		Name: "Writing final content",
 	}
-	stop(true)
 
-	return nil
+	return utils.SpinnerMultiStepNoPrefix(message, []utils.SpinnerStep{parse, merge, write})
 }

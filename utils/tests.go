@@ -48,7 +48,7 @@ func RunPhpCS(backendFlag bool) error {
 	}
 
 	if err = bin.Run(); err != nil {
-		return fmt.Errorf("an error occurred while running phpcs, %w", err)
+		return fmt.Errorf("an error occurred while running phpcs [%s], %w", bin.Path, err)
 	}
 
 	return nil
