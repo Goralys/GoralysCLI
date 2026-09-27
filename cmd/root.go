@@ -44,7 +44,7 @@ var rootCmd = &cobra.Command{
 		showBanner()
 		utils.CleanOldPath()
 
-		if BackendFlag && MobileFlag {
+		if shared.BackendFlag && shared.MobileFlag {
 			return fmt.Errorf("cannot pass both --backend-only and --mobile")
 		}
 
@@ -59,7 +59,7 @@ var rootCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(_ *cobra.Command, _ []string) {
-		if VersionFlag {
+		if shared.VersionFlag {
 			utils.Logf("Goralys CLI %s - built on %s", goralysCLIVer, goralysCLIBuild)
 		}
 	},
