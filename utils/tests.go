@@ -11,6 +11,12 @@ import (
 	"os/exec"
 )
 
+// TestRunner represents a simple test that has a name and can be run via a callback.
+type TestRunner struct {
+	Name     string
+	Callback func() error
+}
+
 // RunEslint runs the pnpm lint command.
 func RunEslint() error {
 	pnpm, err := ResolvePnpm("run", "lint")

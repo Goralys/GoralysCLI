@@ -28,11 +28,12 @@ var backupCmd = &cobra.Command{
 	RunE: func(_ *cobra.Command, _ []string) error {
 		var name = "Goralys"
 		var suffix = "frontend"
-		if mobileFlag {
+		if MobileFlag {
 			name = "GoralysCap"
 		}
-		if backendFlag {
+		if BackendFlag {
 			suffix = "backend"
+			name = "Goralys [backend]"
 		}
 
 		backupPath, err := utils.FromHomeDir(GoralysBackupDir...)
@@ -52,7 +53,7 @@ var backupCmd = &cobra.Command{
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
-		root, err := utils.FindRepoRoot(cwd, mobileFlag)
+		root, err := utils.FindRepoRoot(cwd, MobileFlag)
 		if err != nil {
 			stop(false)
 			return fmt.Errorf("backup failed, %s", err)
@@ -91,7 +92,7 @@ var backupCmd = &cobra.Command{
 
 		utils.Log("Creating backup")
 		stop = utils.StartSpinnerNoPrefix("-> Copying env files")
-		if !backendFlag {
+		if !BackendFlag {
 			err = utils.CopyFile(root, backupPath, ".env.local")
 			if err != nil {
 				stop(false)
@@ -99,7 +100,7 @@ var backupCmd = &cobra.Command{
 			}
 		}
 
-		if !mobileFlag {
+		if !MobileFlag {
 			err = utils.CopyFile(root, backupPath, filepath.Join("backend", ".env"))
 			if err != nil {
 				stop(false)
@@ -108,7 +109,7 @@ var backupCmd = &cobra.Command{
 		}
 		stop(true)
 
-		if !mobileFlag {
+		if !MobileFlag {
 			stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
 			err = utils.Cp(filepath.Join(root, "backend", "Assets"), filepath.Join(backupPath, "backend", "Assets"))
 			if err != nil {

@@ -9,8 +9,10 @@ package cmd
 import (
 	_ "embed"
 	"fmt"
+	"goralys-cli/shared"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"goralys-cli/utils"
@@ -42,11 +44,12 @@ var setupCmd = &cobra.Command{
 	RunE: func(_ *cobra.Command, _ []string) error {
 		var name = "Goralys"
 		var suffix = "frontend"
-		if mobileFlag {
+		if shared.MobileFlag {
 			name = "GoralysCap"
 		}
-		if backendFlag {
+		if shared.BackendFlag {
 			suffix = "backend"
+			name = "Goralys [backend]"
 		}
 
 		utils.Logf("Setting up %s", name)
@@ -65,7 +68,7 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
-		root, err := utils.FindRepoRoot(cwd, mobileFlag)
+		root, err := utils.FindRepoRoot(cwd, shared.MobileFlag)
 		if err != nil {
 			stop(false)
 			return fmt.Errorf("setup failed, %s", err)
@@ -92,14 +95,14 @@ var setupCmd = &cobra.Command{
 			utils.Logf("Restoring backup from %s", backupPath)
 
 			stop = utils.StartSpinnerNoPrefix("-> Copying env files")
-			if !backendFlag {
+			if !shared.BackendFlag {
 				err = utils.CopyFile(backupPath, root, ".env.local")
 				if err != nil {
 					stop(false)
 					return err
 				}
 			}
-			if !mobileFlag {
+			if !shared.MobileFlag {
 				err = utils.CopyFile(backupPath, root, filepath.Join("backend", ".env"))
 				if err != nil {
 					stop(false)
@@ -108,7 +111,7 @@ var setupCmd = &cobra.Command{
 			}
 			stop(true)
 
-			if !mobileFlag {
+			if !shared.MobileFlag {
 				stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
 				err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(root, "backend", "Assets"))
 				if err != nil {
@@ -123,7 +126,7 @@ var setupCmd = &cobra.Command{
 			utils.Log("No backup found")
 		}
 
-		if !backendFlag {
+		if !shared.BackendFlag {
 			stop := utils.StartSpinner("Checking for pnpm")
 			pnpm, err := utils.ResolvePnpm("install", "--color")
 			if err != nil {
@@ -141,7 +144,7 @@ var setupCmd = &cobra.Command{
 			utils.Log("pnpm dependencies installed")
 		}
 
-		if !mobileFlag {
+		if !shared.MobileFlag {
 			stop := utils.StartSpinner("Checking for composer")
 			php, err := utils.ResolvePhp()
 			if err != nil {
@@ -171,7 +174,7 @@ var setupCmd = &cobra.Command{
 
 		utils.Log("Configuring environments")
 
-		if !mobileFlag {
+		if !shared.MobileFlag {
 			err = templates.MakeEnvFileFromTemplate(root, envTemplate, "(1/2) Creating .env")
 			if err != nil {
 				return err
@@ -188,9 +191,9 @@ var setupCmd = &cobra.Command{
 			}
 		}
 
-		if backendFlag || mobileFlag {
+		if shared.BackendFlag || shared.MobileFlag {
 			utils.Log("Finalizing your configuration, you are almost there")
-			if backendFlag {
+			if shared.BackendFlag {
 				stop := utils.StartSpinnerNoPrefix("-> Creating .htaccess")
 				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, ".htaccess"))
 				if err != nil {
@@ -200,7 +203,7 @@ var setupCmd = &cobra.Command{
 				stop(true)
 			}
 
-			if mobileFlag {
+			if shared.MobileFlag {
 				stop := utils.StartSpinnerNoPrefix("-> Generating assets")
 				pnpmGenerate, err := utils.ResolvePnpm("run", "assets:generate")
 				if err != nil {
@@ -274,7 +277,7 @@ var setupCmd = &cobra.Command{
 			}
 		}
 
-		if backendFlag {
+		if shared.BackendFlag {
 			utils.Log("Backend only setup detected, removing non backend dir")
 			err = utils.RemoveNonBackendDirs(root)
 			if err != nil {
@@ -282,53 +285,25 @@ var setupCmd = &cobra.Command{
 			}
 		}
 
-		var testsStr = "eslint + phpcs"
-		if mobileFlag {
-			testsStr = "eslint"
-		} else if backendFlag {
-			testsStr = "phpcs"
+		var tests []string
+		if shared.MobileFlag || !shared.BackendFlag {
+			tests = append(tests, "eslint")
+		}
+		if shared.BackendFlag || !shared.MobileFlag {
+			tests = append(tests, "phpcs")
 		}
 
-		var tests bool
-		utils.PromptfBool(&tests, "Do you want the setup to run checks (%s) ?", testsStr)
+		var runTests bool
+		utils.PromptfBool(&runTests, "Do you want the setup to run checks (%s) ?", strings.Join(tests, " + "))
 
-		if tests {
-			stop := utils.StartSpinner("Running phpcs")
-			err = utils.RunPhpCS(backendFlag)
-			if err != nil {
-				stop(false)
-
-				var reRun bool
-				utils.Logf("Phpcs error: %s", err)
-				utils.PromptBool(&reRun, "phpcs violations were found, do you want setup to try to fix them ?")
-
-				if reRun {
-					stop = utils.StartSpinner("Running phpcbf")
-					if err = utils.RunPhpCBF(backendFlag); err != nil {
-						stop(false)
+		if runTests {
+			for _, t := range []utils.TestRunner{shared.PHPCS_TEST, shared.ESLINT_TEST} {
+				if slices.Contains(tests, t.Name) {
+					err = t.Callback()
+					if err != nil {
 						return err
 					}
-					stop(true)
-
-					stop = utils.StartSpinner("Re-running phpcs after fixes")
-					if err = utils.RunPhpCS(backendFlag); err != nil {
-						stop(false)
-						return err
-					}
-					stop(true)
-					utils.Log("phpcs clean after fixes")
 				}
-			} else {
-				stop(true)
-			}
-
-			if !backendFlag {
-				stop = utils.StartSpinner("Running eslint")
-				if err = utils.RunEslint(); err != nil {
-					stop(false)
-					return err
-				}
-				stop(true)
 			}
 		}
 

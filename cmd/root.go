@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"os"
 
+	"goralys-cli/shared"
+
 	"goralys-cli/utils"
 
 	"github.com/spf13/cobra"
@@ -42,7 +44,7 @@ var rootCmd = &cobra.Command{
 		showBanner()
 		utils.CleanOldPath()
 
-		if backendFlag && mobileFlag {
+		if BackendFlag && MobileFlag {
 			return fmt.Errorf("cannot pass both --backend-only and --mobile")
 		}
 
@@ -57,7 +59,7 @@ var rootCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(_ *cobra.Command, _ []string) {
-		if versionFlag {
+		if VersionFlag {
 			utils.Logf("Goralys CLI %s - built on %s", goralysCLIVer, goralysCLIBuild)
 		}
 	},
@@ -72,17 +74,13 @@ func Execute() {
 	}
 }
 
-var versionFlag bool
-
-var mobileFlag bool
-var backendFlag bool
 var yesFlag bool
 var noFlag bool
 
 func init() {
 
 	rootCmd.Flags().BoolVarP(
-		&versionFlag,
+		&shared.VersionFlag,
 		"version",
 		"v",
 		false,
@@ -90,7 +88,7 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(
-		&mobileFlag,
+		&shared.MobileFlag,
 		"mobile",
 		"m",
 		false,
@@ -98,7 +96,7 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(
-		&backendFlag,
+		&shared.BackendFlag,
 		"backend-only",
 		"b",
 		false,
