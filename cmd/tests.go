@@ -7,10 +7,11 @@ package cmd
 
 import (
 	"fmt"
-	"goralys-cli/shared"
 	"os"
 	"slices"
 	"strings"
+
+	"goralys-cli/shared"
 
 	"goralys-cli/utils"
 
@@ -63,7 +64,7 @@ var testsCmd = &cobra.Command{
 		stop(true)
 		utils.Logf("Found, running tests (%s) for repo at %s", strings.Join(tests, " + "), root)
 
-		for _, t := range []utils.TestRunner{shared.PHPCS_TEST, shared.ESLINT_TEST} {
+		for _, t := range []utils.TestRunner{shared.PhpCsTest, shared.EslintTest} {
 			if slices.Contains(tests, t.Name) {
 				err = t.Callback()
 				if err != nil {

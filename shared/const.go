@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// Package shared is the package that holds all shared information such as flags and constants.
 package shared
 
 import (
 	"goralys-cli/utils"
 )
 
-var PHPCS_TEST = utils.TestRunner{
+// PhpCsTest is a simple test runner which checks for phpcs code violations. If it finds violations, it can run phpcbf
+// to fix what it can.
+var PhpCsTest = utils.TestRunner{
 	Name: "phpcs",
 	Callback: func() error {
 		stop := utils.StartSpinner("Running phpcs")
@@ -19,7 +20,6 @@ var PHPCS_TEST = utils.TestRunner{
 			stop(false)
 
 			var reRun bool
-			utils.Logf("Phpcs error: %s", err)
 			utils.PromptBool(&reRun, "phpcs violations were found, do you want setup to try to fix them ?")
 
 			if reRun {
@@ -45,7 +45,8 @@ var PHPCS_TEST = utils.TestRunner{
 	},
 }
 
-var ESLINT_TEST = utils.TestRunner{
+// EslintTest is a simple test runner which runs eslint.
+var EslintTest = utils.TestRunner{
 	Name: "eslint",
 	Callback: func() error {
 		stop := utils.StartSpinner("Running eslint")

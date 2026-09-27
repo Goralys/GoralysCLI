@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// Package utils is the main package containing all the utilities functions for CLI tool.
 package utils
 
 import (
@@ -54,7 +53,7 @@ func RunPhpCS(backendFlag bool) error {
 	}
 
 	if err = bin.Run(); err != nil {
-		return fmt.Errorf("an error occurred while running phpcs [%s], %w", bin.Path, err)
+		return fmt.Errorf("an error occurred while running phpcs, %w", err)
 	}
 
 	return nil

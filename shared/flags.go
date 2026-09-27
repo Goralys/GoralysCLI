@@ -3,9 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// Package shared is the package that holds all shared information such as flags and constants.
 package shared
 
+// VersionFlag is a root level flag that triggers the "version command" (prints the tool's current version)
 var VersionFlag bool
+
+// MobileFlag is a persistent flag that is used to indicate that the tool is run for the GoralysCap repo
 var MobileFlag bool
+
+// BackendFlag is a persistent flag that is used to indicate that the tool is run for "backend-only" environment
+// (e.g: server deployment in production)
 var BackendFlag bool
