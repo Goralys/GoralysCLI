@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// Package utils is the main package containing all the utilities functions for CLI tool
 package utils
 
 import (
 	"fmt"
+	"os"
 	"path"
 )
 
@@ -73,4 +73,8 @@ func RemoveNonBackendDirs(root string) error {
 
 	stop(true)
 	return nil
+}
+
+func ElevateToExecutable(path string) error {
+	return os.Chmod(path, 0755)
 }

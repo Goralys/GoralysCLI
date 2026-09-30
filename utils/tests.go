@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-// Package utils is the main package containing all the utilities functions for CLI tool.
 package utils
 
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
+
+	"goralys-cli/shared"
 )
 
 // RunEslint runs the pnpm lint command.
@@ -26,58 +28,91 @@ func RunEslint() error {
 	return nil
 }
 
-// RunPhpCS runs the composer phpcs command.
-func RunPhpCS(backendFlag bool) error {
-	var bin *exec.Cmd
+// RunPhpCS runs the PHP Code Sniffer and Beautifier tool. The actual executable invoked (phpcs/phpcbf) depends on the
+// provided command.
+func RunPhpCS(backendFlag bool, command string) error {
+	var cmd *exec.Cmd
 	var err error
+	var backendDir = filepath.Join(shared.RepoRoot, "backend")
 
 	if backendFlag {
 		php, errPhp := ResolvePhp()
 
 		if errPhp == nil {
-			bin, err = ResolveComposer(php, "--working-dir=backend", "phpcs")
+			cmd = RunPhp(
+				php,
+				filepath.Join(backendDir, "vendor", "bin", command),
+				".",
+				"--standard="+filepath.Join(backendDir, "phpcs.xml"),
+			)
+			cmd.Dir = backendDir
 		} else {
-			return errPhp
+			return fmt.Errorf("failed to resolve php, %w", errPhp)
 		}
 	} else {
-		bin, err = ResolvePnpm("run", "phpcs")
+		cmd, err = ResolvePnpm("run", command)
+		if err != nil {
+			return fmt.Errorf("failed to run %s, %w", command, err)
+		}
 	}
 
-	if err != nil {
-		return fmt.Errorf("failed to run phpcs, %w", err)
-	}
-
-	if err = bin.Run(); err != nil {
-		return fmt.Errorf("an error occurred while running phpcs, %w", err)
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("an error occurred while running %s, %w", command, err)
 	}
 
 	return nil
 }
 
-// RunPhpCBF runs the composer phpcbf command.
-func RunPhpCBF(backendFlag bool) error {
-	var bin *exec.Cmd
-	var err error
+// phpCsTest is a simple test runner that checks for phpcs code violations. If it finds violations, it can run phpcbf
+// to fix what it can.
+var phpCsTest = shared.TestRunner{
+	Name: "phpcs",
+	Callback: func() error {
+		stop := StartSpinner("Running phpcs")
+		err := RunPhpCS(shared.BackendFlag, "phpcs")
+		if err != nil {
+			Logf("(phpcs error): %s", err)
+			stop(false)
 
-	if backendFlag {
-		php, errPhp := ResolvePhp()
+			var reRun bool
+			PromptBool(&reRun, "phpcs violations were found, do you want setup to try to fix them ?")
 
-		if errPhp == nil {
-			bin, err = ResolveComposer(php, "--working-dir=backend", "phpcbf")
+			if reRun {
+				stop = StartSpinner("Running phpcbf")
+				if err = RunPhpCS(shared.BackendFlag, "phpcbf"); err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
+
+				stop = StartSpinner("Re-running phpcs after fixes")
+				if err = RunPhpCS(shared.BackendFlag, "phpcs"); err != nil {
+					stop(false)
+					return err
+				}
+				stop(true)
+				Log("phpcs clean after fixes")
+			}
 		} else {
-			return errPhp
+			stop(true)
 		}
-	} else {
-		bin, err = ResolvePnpm("run", "phpcbf")
-	}
-
-	if err != nil {
-		return fmt.Errorf("failed to run phpcbf, %w", err)
-	}
-
-	if err = bin.Run(); err != nil {
-		return fmt.Errorf("an error occurred while running phpcbf, %w", err)
-	}
-
-	return nil
+		return nil
+	},
 }
+
+// eslintTest is a simple test runner that runs eslint.
+var eslintTest = shared.TestRunner{
+	Name: "eslint",
+	Callback: func() error {
+		stop := StartSpinner("Running eslint")
+		if err := RunEslint(); err != nil {
+			stop(false)
+			return err
+		}
+		stop(true)
+		return nil
+	},
+}
+
+// Tests is a list of all the tests that can be run.
+var Tests = []shared.TestRunner{phpCsTest, eslintTest}
