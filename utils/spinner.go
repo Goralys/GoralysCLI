@@ -7,15 +7,10 @@ package utils
 
 import (
 	"fmt"
+	"goralys-cli/shared"
 	"strings"
 	"time"
 )
-
-// SpinnerStep represents a step of a multistep spinner.
-type SpinnerStep struct {
-	Callback func() error
-	Name     string
-}
 
 // StartSpinner starts a custom spinner (with the default CLI prefix) that prints out animated dots. It returns a
 // function that takes one bool argument [ok]. When this function is called, the animation stops, and it prints out the
@@ -80,7 +75,7 @@ func overwriteN(n int, lines []string) (string, error) {
 	return result.String(), nil
 }
 
-func spinnerMultiStep(prefix string, label string, steps []SpinnerStep) error {
+func spinnerMultiStep(prefix string, label string, steps []shared.SpinnerStep) error {
 	currentStep := 0
 	stepsPrinted := 0 // keeps track of the steps that actually printed in the console
 	doneGlobal := make(chan struct{})
@@ -186,6 +181,6 @@ func spinnerMultiStep(prefix string, label string, steps []SpinnerStep) error {
 // of steps and prints their execution results in the console.
 // A step is essentially a functions that returns an error, if the error is nil, the step is considered successful
 // (green [OK] in the console); other whies the step is considered failed (red [FAIL] in the console).
-func SpinnerMultiStepNoPrefix(label string, steps []SpinnerStep) error {
+func SpinnerMultiStepNoPrefix(label string, steps []shared.SpinnerStep) error {
 	return spinnerMultiStep(strings.Repeat(" ", GoralysPrefixLen()), label, steps)
 }

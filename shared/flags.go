@@ -8,9 +8,12 @@ package shared
 // VersionFlag is a root level flag that triggers the "version command" (prints the tool's current version)
 var VersionFlag bool
 
-// MobileFlag is a persistent flag that is used to indicate that the tool is run for the GoralysCap repo
+// MobileFlag is a persistent flag used to indicate that the tool is run for the GoralysCap repo
 var MobileFlag bool
 
-// BackendFlag is a persistent flag that is used to indicate that the tool is run for "backend-only" environment
-// (e.g: server deployment in production)
+// BackendFlag is a persistent flag used to indicate that the tool is run for a "backend-only" environment
+// (e.g.: server deployment in production)
 var BackendFlag bool
+
+// RepoRoot is a variable used to store the root directory of the repository
+var RepoRoot string

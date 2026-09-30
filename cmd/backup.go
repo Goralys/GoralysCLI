@@ -54,14 +54,14 @@ var backupCmd = &cobra.Command{
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
-		root, err := utils.FindRepoRoot(cwd, shared.MobileFlag)
+		shared.RepoRoot, err = utils.FindRepoRoot(cwd, shared.MobileFlag)
 		if err != nil {
 			stop(false)
 			return fmt.Errorf("backup failed, %s", err)
 		}
 
 		stop(true)
-		utils.Logf("Found, creating backup for repo at %s", root)
+		utils.Logf("Found, creating backup for repo at %s", shared.RepoRoot)
 
 		stop = utils.StartSpinner("Checking for existing backup at " + backupPath)
 		exists, err := utils.DirExists(backupPath)
@@ -94,7 +94,7 @@ var backupCmd = &cobra.Command{
 		utils.Log("Creating backup")
 		stop = utils.StartSpinnerNoPrefix("-> Copying env files")
 		if !shared.BackendFlag {
-			err = utils.CopyFile(root, backupPath, ".env.local")
+			err = utils.CopyFile(shared.RepoRoot, backupPath, ".env.local")
 			if err != nil {
 				stop(false)
 				return err
@@ -102,7 +102,7 @@ var backupCmd = &cobra.Command{
 		}
 
 		if !shared.MobileFlag {
-			err = utils.CopyFile(root, backupPath, filepath.Join("backend", ".env"))
+			err = utils.CopyFile(shared.RepoRoot, backupPath, filepath.Join("backend", ".env"))
 			if err != nil {
 				stop(false)
 				return err
@@ -112,7 +112,7 @@ var backupCmd = &cobra.Command{
 
 		if !shared.MobileFlag {
 			stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
-			err = utils.Cp(filepath.Join(root, "backend", "Assets"), filepath.Join(backupPath, "backend", "Assets"))
+			err = utils.Cp(filepath.Join(shared.RepoRoot, "backend", "Assets"), filepath.Join(backupPath, "backend", "Assets"))
 			if err != nil {
 				stop(false)
 				return err
@@ -128,14 +128,4 @@ var backupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(backupCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// backupCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// backupCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

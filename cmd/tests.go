@@ -47,10 +47,10 @@ var testsCmd = &cobra.Command{
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
-		root, err := utils.FindRepoRoot(cwd, shared.MobileFlag)
+		shared.RepoRoot, err = utils.FindRepoRoot(cwd, shared.MobileFlag)
 		if err != nil {
 			stop(false)
-			return fmt.Errorf("setup failed, %s", err)
+			return fmt.Errorf("failed to find repo root, %s", err)
 		}
 
 		var tests []string
@@ -62,9 +62,9 @@ var testsCmd = &cobra.Command{
 		}
 
 		stop(true)
-		utils.Logf("Found, running tests (%s) for repo at %s", strings.Join(tests, " + "), root)
+		utils.Logf("Found, running tests (%s) for repo at %s", strings.Join(tests, " + "), shared.RepoRoot)
 
-		for _, t := range []utils.TestRunner{shared.PhpCsTest, shared.EslintTest} {
+		for _, t := range utils.Tests {
 			if slices.Contains(tests, t.Name) {
 				err = t.Callback()
 				if err != nil {

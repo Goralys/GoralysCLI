@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"goralys-cli/shared"
 	"goralys-cli/utils"
 
 	"gopkg.in/yaml.v3"
@@ -218,7 +219,7 @@ func MakeEnvFileFromTemplate(root string, template string, message string) error
 	var env EnvFile
 	var err error
 
-	parse := utils.SpinnerStep{
+	parse := shared.SpinnerStep{
 		Callback: func() error {
 			env, err = parseYamlTemplate(root, []byte(template))
 			if err != nil {
@@ -230,7 +231,7 @@ func MakeEnvFileFromTemplate(root string, template string, message string) error
 		Name: "Parsing template",
 	}
 
-	merge := utils.SpinnerStep{
+	merge := shared.SpinnerStep{
 		Callback: func() error {
 			env, err = mergeEnvFile(root, env)
 			if err != nil {
@@ -242,7 +243,7 @@ func MakeEnvFileFromTemplate(root string, template string, message string) error
 		Name: "Merging files",
 	}
 
-	write := utils.SpinnerStep{
+	write := shared.SpinnerStep{
 		Callback: func() error {
 			content := buildEnvFileContents(env)
 			err = os.WriteFile(filepath.Join(root, env.File), []byte(content), os.ModePerm)
@@ -255,5 +256,5 @@ func MakeEnvFileFromTemplate(root string, template string, message string) error
 		Name: "Writing final content",
 	}
 
-	return utils.SpinnerMultiStepNoPrefix(message, []utils.SpinnerStep{parse, merge, write})
+	return utils.SpinnerMultiStepNoPrefix(message, []shared.SpinnerStep{parse, merge, write})
 }

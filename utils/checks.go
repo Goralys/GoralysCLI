@@ -105,7 +105,7 @@ func findRepoRoot(start string, checker func(string) bool) (string, error) {
 	}
 }
 
-// FindRepoRoot retrieves the path of the repository root for the project in which the CLI tool is ran.
+// FindRepoRoot retrieves the path of the repository root for the project in which the CLI tool is run.
 // It recursively tries to go up in the path tree with a maximum depth of 5.
 func FindRepoRoot(start string, isMobile bool) (string, error) {
 	if isMobile {

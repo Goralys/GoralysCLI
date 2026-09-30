@@ -86,12 +86,17 @@ func ResolveComposer(phpBin string, args ...string) (*exec.Cmd, error) {
 		return nil, errComposerNotFound
 	}
 
+	return RunPhp(phpBin, composerBin, args...), nil
+}
+
+// RunPhp is used to run tools with the provided php executable.
+func RunPhp(phpBin string, bin string, args ...string) *exec.Cmd {
 	if runtime.GOOS == "windows" {
-		return exec.Command(composerBin, args...), nil
+		return exec.Command(bin, args...)
 	}
 
-	cmdArgs := append([]string{composerBin}, args...)
-	return exec.Command(phpBin, cmdArgs...), nil
+	cmdArgs := append([]string{bin}, args...)
+	return exec.Command(phpBin, cmdArgs...)
 }
 
 // ResolvePnpm locates the pnpm executable and returns it as an executable command

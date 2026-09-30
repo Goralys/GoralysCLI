@@ -68,21 +68,21 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("failed to get wd, %s", err)
 		}
 
-		root, err := utils.FindRepoRoot(cwd, shared.MobileFlag)
+		shared.RepoRoot, err = utils.FindRepoRoot(cwd, shared.MobileFlag)
 		if err != nil {
 			stop(false)
 			return fmt.Errorf("setup failed, %s", err)
 		}
 
 		stop(true)
-		utils.Logf("Found, setting up for repo at %s", root)
+		utils.Logf("Found, setting up for repo at %s", shared.RepoRoot)
 
 		// backup restore
 		stop = utils.StartSpinner("Checking for existing backup at " + backupPath)
 		exists, err := utils.DirExists(backupPath)
 		if err != nil {
 			stop(false)
-			return err
+			return fmt.Errorf("failed to check for existing backup, %s", err)
 		}
 		stop(true)
 
@@ -96,27 +96,27 @@ var setupCmd = &cobra.Command{
 
 			stop = utils.StartSpinnerNoPrefix("-> Copying env files")
 			if !shared.BackendFlag {
-				err = utils.CopyFile(backupPath, root, ".env.local")
+				err = utils.CopyFile(backupPath, shared.RepoRoot, ".env.local")
 				if err != nil {
 					stop(false)
-					return err
+					return fmt.Errorf("failed to copy .env.local file, %s", err)
 				}
 			}
 			if !shared.MobileFlag {
-				err = utils.CopyFile(backupPath, root, filepath.Join("backend", ".env"))
+				err = utils.CopyFile(backupPath, shared.RepoRoot, filepath.Join("backend", ".env"))
 				if err != nil {
 					stop(false)
-					return err
+					return fmt.Errorf("failed to copy backend/.env file, %s", err)
 				}
 			}
 			stop(true)
 
 			if !shared.MobileFlag {
 				stop = utils.StartSpinnerNoPrefix("-> Copying backend/Assets")
-				err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(root, "backend", "Assets"))
+				err = utils.Cp(filepath.Join(backupPath, "backend", "Assets"), filepath.Join(shared.RepoRoot, "backend", "Assets"))
 				if err != nil {
 					stop(false)
-					return err
+					return fmt.Errorf("failed to copy backend/Assets directory, %s", err)
 				}
 				stop(true)
 			}
@@ -178,7 +178,16 @@ var setupCmd = &cobra.Command{
 
 			utils.Log("Composer dependencies installed.")
 
-			err = utils.CreateBackendDirs(root)
+			err = utils.CreateBackendDirs(shared.RepoRoot)
+			if err != nil {
+				return err
+			}
+
+			err = utils.ElevateToExecutable(filepath.Join(shared.RepoRoot, "backend", "vendor", "bin", "phpcs"))
+			if err != nil {
+				return err
+			}
+			err = utils.ElevateToExecutable(filepath.Join(shared.RepoRoot, "backend", "vendor", "bin", "phpcbf"))
 			if err != nil {
 				return err
 			}
@@ -187,17 +196,17 @@ var setupCmd = &cobra.Command{
 		utils.Log("Configuring environments")
 
 		if !shared.MobileFlag {
-			err = templates.MakeEnvFileFromTemplate(root, envTemplate, "(1/2) Creating .env")
+			err = templates.MakeEnvFileFromTemplate(shared.RepoRoot, envTemplate, "(1/2) Creating .env")
 			if err != nil {
 				return err
 			}
 
-			err = templates.MakeEnvFileFromTemplate(root, envNextTemplate, "(2/2) Creating .env.local")
+			err = templates.MakeEnvFileFromTemplate(shared.RepoRoot, envNextTemplate, "(2/2) Creating .env.local")
 			if err != nil {
 				return err
 			}
 		} else {
-			err = templates.MakeEnvFileFromTemplate(root, envCapTemplate, "Creating .env.local")
+			err = templates.MakeEnvFileFromTemplate(shared.RepoRoot, envCapTemplate, "Creating .env.local")
 			if err != nil {
 				return err
 			}
@@ -207,7 +216,7 @@ var setupCmd = &cobra.Command{
 			utils.Log("Finalizing your configuration, you are almost there")
 			if shared.BackendFlag {
 				stop := utils.StartSpinnerNoPrefix("-> Creating .htaccess")
-				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(root, ".htaccess"))
+				err := templates.LoadStaticTemplate(htAccessTemplate, filepath.Join(shared.RepoRoot, ".htaccess"))
 				if err != nil {
 					stop(false)
 					return err
@@ -242,7 +251,7 @@ var setupCmd = &cobra.Command{
 				}
 				stop(true)
 
-				androidExists, err := utils.DirExists(filepath.Join(root, "android"))
+				androidExists, err := utils.DirExists(filepath.Join(shared.RepoRoot, "android"))
 				if err != nil {
 					return err
 				}
@@ -269,7 +278,7 @@ var setupCmd = &cobra.Command{
 				err = templates.LoadStaticTemplate(
 					mainActivityTemplate,
 					filepath.Join(
-						root,
+						shared.RepoRoot,
 						"android",
 						"app",
 						"src",
@@ -291,7 +300,7 @@ var setupCmd = &cobra.Command{
 
 		if shared.BackendFlag {
 			utils.Log("Backend only setup detected, removing non backend dir")
-			err = utils.RemoveNonBackendDirs(root)
+			err = utils.RemoveNonBackendDirs(shared.RepoRoot)
 			if err != nil {
 				return err
 			}
@@ -309,7 +318,7 @@ var setupCmd = &cobra.Command{
 		utils.PromptfBool(&runTests, "Do you want the setup to run checks (%s) ?", strings.Join(tests, " + "))
 
 		if runTests {
-			for _, t := range []utils.TestRunner{shared.PhpCsTest, shared.EslintTest} {
+			for _, t := range utils.Tests {
 				if slices.Contains(tests, t.Name) {
 					err = t.Callback()
 					if err != nil {
@@ -325,13 +334,4 @@ var setupCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(setupCmd)
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// setupCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// setupCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
