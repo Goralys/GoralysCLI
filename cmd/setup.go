@@ -43,9 +43,11 @@ var setupCmd = &cobra.Command{
     dependencies (pnpm and composer) for the project.`,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		var name = "Goralys"
+		var namePure = "Goralys"
 		var suffix = "frontend"
 		if shared.MobileFlag {
 			name = "GoralysCap"
+			namePure = "GoralysCap"
 		}
 		if shared.BackendFlag {
 			suffix = "backend"
@@ -59,7 +61,7 @@ var setupCmd = &cobra.Command{
 			return fmt.Errorf("failed to construct the backup path, %w", err)
 		}
 
-		backupPath = filepath.Join(backupPath, strings.ToLower(name), strings.ToLower(suffix))
+		backupPath = filepath.Join(backupPath, strings.ToLower(namePure), strings.ToLower(suffix))
 		stop := utils.StartSpinner("Finding repo root")
 
 		cwd, err := os.Getwd()

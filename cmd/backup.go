@@ -28,9 +28,11 @@ var backupCmd = &cobra.Command{
 		   The created backups can be automatically restored by the setup command`,
 	RunE: func(_ *cobra.Command, _ []string) error {
 		var name = "Goralys"
+		var namePure = "Goralys"
 		var suffix = "frontend"
 		if shared.MobileFlag {
 			name = "GoralysCap"
+			namePure = "GoralysCap"
 		}
 		if shared.BackendFlag {
 			suffix = "backend"
@@ -42,7 +44,7 @@ var backupCmd = &cobra.Command{
 			return fmt.Errorf("failed to construct the backup path, %w", err)
 		}
 
-		backupPath = filepath.Join(backupPath, strings.ToLower(name), strings.ToLower(suffix))
+		backupPath = filepath.Join(backupPath, strings.ToLower(namePure), strings.ToLower(suffix))
 		utils.Logf("Creating backup for %s", name)
 		utils.Log(utils.Colorize(utils.ColorYellow, "This command does not back up the database"))
 
@@ -69,7 +71,10 @@ var backupCmd = &cobra.Command{
 			stop(false)
 			return err
 		}
-		stop(exists)
+		stop(true)
+		if !exists {
+			utils.Log(utils.Colorize(utils.ColorYellow, "Found no existing backup."))
+		}
 
 		var overwrite = true
 		if exists {
